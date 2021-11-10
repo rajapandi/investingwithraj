@@ -1,0 +1,47 @@
+/* your styles go here */
+
+form i {
+    margin-left: -30px;
+    cursor: pointer;
+}
+
+tr.collapse.in {
+    display:table-row;
+  }
+
+  .spanRight{
+    border-radius: 0 0 0 7px;right: 80px;display: inline-block;float:right;position: absolute;
+  }
+  .text-green{
+      color:#35ac88;
+  }
+  text-right {
+    text-align: right;
+}
+.depth-table {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-1);
+}
+  
+
+/*********** Dashboard css Start *********************/
+
+.dashboard-list {border: 1px solid #8c8c8c; padding: 10px 15px; border-radius: 8px;}
+.dashboard-list p {font-size: 14px;}
+.dashboard-list h5 {font-size: 16px;}
+.dash-ammount h5{display: flex; justify-content: space-between;}
+
+/*********** Dashboard css End *********************/
+
+/*********** Header Fix on top Css Start *********************/
+header.header {z-index: 999; position: sticky; top: 0; width: 100%;}
+/*********** Header Fix on End *********************/
+
+/*********** sidebar Nav Css Start *********************/
+.sidebar .sidebar-heading {color: #343a40;}
+.sidebar li.sidebar-list-item {margin-bottom: 12px;}
+.sidebar-menu{background: #f9f9f9;  padding: 10px 0 2px;}
+.sidebar-link:hover {background: rgba(0,0,0,0.06);}
+.sidebar-link{padding: 0.8rem 1.5rem;}
+/*********** sidebar Nav Css End *********************/

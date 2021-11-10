@@ -1,0 +1,4 @@
+[24-Jul-2021 19:28:03 UTC] PHP Fatal error:  Can't use function return value in write context in /home/s4tuqmox76hm/public_html/trade.whizzact.com/app/Http/Controllers/HomeController.php on line 134
+[24-Jul-2021 19:46:42 UTC] PHP Fatal error:  Cannot use [] for reading in /home/s4tuqmox76hm/public_html/trade.whizzact.com/app/Http/Controllers/HomeController.php on line 150
+[07-Aug-2021 06:49:19 UTC] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in /home/s4tuqmox76hm/public_html/trade.whizzact.com/storage/framework/views/f285441aa32d483165d4e49a2bda8c63026b57e2.php on line 3
+[07-Aug-2021 06:49:38 UTC] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in /home/s4tuqmox76hm/public_html/trade.whizzact.com/storage/framework/views/f285441aa32d483165d4e49a2bda8c63026b57e2.php on line 3
