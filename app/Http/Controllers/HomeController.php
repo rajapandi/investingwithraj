@@ -12,6 +12,7 @@ use App\Http\Requests;
 use App\Models\Customer;
 use App\Models\TradingAccount;
 use App\Models\Trade;
+use App\Models\Instruments;
 use App\Models\Holding;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Input;
@@ -311,7 +312,7 @@ class HomeController extends Controller{
     }
 
     public function holding(Request $request){
-        $holding = 'was:holding';
+        $holding = 'whizz:holding';
         $data=[];$GetHolding = array();$kiteHolding="";$kiteArray=[];
         if(unserialize(Redis::get($holding))!=null){
             $json = json_decode(unserialize(Redis::get($holding)));
@@ -449,13 +450,25 @@ class HomeController extends Controller{
 
     public static function buildHolding($GetHolding, $holding){
         $grouped = array();
+        $tradingsymbol="";
         foreach($GetHolding as $value) {
             $qty=0;
             $totalQty=0;
             foreach($value['data'] as $object){
                 if(!array_key_exists($object['tradingsymbol'], $grouped)) {
                     $newObject = new \stdClass();
-                    $newObject->tradingsymbol = $object['tradingsymbol'];
+                    if($object['broker']=="Angel"){
+                        $instruments = Instruments::where('exchange', $object['exchange'])->where('angel_symbol', $object['tradingsymbol'])->first();
+                        if($instruments){
+                            $tradingsymbol = $instruments->zerodha_symbol;
+                        }else{
+                            $tradingsymbol = $object['tradingsymbol'];
+                        }
+
+                    }else{
+                        $tradingsymbol = $object['tradingsymbol'];
+                    }
+                    $newObject->tradingsymbol = $tradingsymbol;
                     $newObject->ltp = $object['ltp'];
                     $newObject->exchange = $object['exchange'];
                     $newObject->quantity = $object['quantity'];//array();
@@ -501,7 +514,7 @@ class HomeController extends Controller{
         $json = json_decode($jd, true);
         Redis::set($holding, serialize($jd));
         $json = json_decode(unserialize(Redis::get($holding)));
-        Redis::expire($holding, 1800);
+        Redis::expire($holding, 1000);
         return $json;
     }
 
@@ -648,6 +661,7 @@ class HomeController extends Controller{
 
     public static function buildPortfolio($GetHolding, $portfolio){
         $grouped = array();
+        $tradingsymbol="";
         $totalinvestment=0;$currentvalue=0;
         foreach($GetHolding as $value) {
             foreach($value['data'] as $object){
@@ -666,10 +680,21 @@ class HomeController extends Controller{
                     $newObject->ITEMS = array();
                     $grouped[$object['loginId']] = $newObject;
                 }
-
             $taskObject = new \stdClass();
             $taskObject->totalInvestment = number_format((float)$object['quantity'], 2, '.', '')*number_format((float)$object['averageprice'], 2, '.', '');
-            $taskObject->tradingsymbol = $object['tradingsymbol'];
+            if($object['broker']=="Angel"){
+                $instruments = Instruments::where('exchange', $object['exchange'])->where('angel_symbol', $object['tradingsymbol'])->first();
+                if($instruments){
+                    $tradingsymbol = $instruments->zerodha_symbol;
+                }else{
+                    $tradingsymbol = $object['tradingsymbol'];
+                }
+
+            }else{
+                $tradingsymbol = $object['tradingsymbol'];
+            }
+            $taskObject->tradingsymbol = $tradingsymbol;
+            // $taskObject->tradingsymbol = $object['tradingsymbol'];
             $taskObject->exchange = $object['exchange'];
             $taskObject->isin = $object['isin'];
             $taskObject->t1quantity = $object['t1quantity'];

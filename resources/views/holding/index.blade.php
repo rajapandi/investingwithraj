@@ -192,8 +192,8 @@ display: block;
                                                                     array_push($loginArr, $item->loginId);
                                                                     }
                                                                     ?>
-                                                                    <a href="/trade/order-create?group=true&login={{json_encode($loginArr)}}&symbol={{$values->tradingsymbol}}&type=buy"><button class="btn btn-primary btn-sm mt-2">BUY</button></a>
-                                                                    <a href="/trade/order-create?group=true&login={{json_encode($loginArr)}}&symbol={{$values->tradingsymbol}}&type=sell"><button class="btn btn-danger btn-sm mt-2">SELL</button></a>
+                                                                    <a href="/trade/order-create?group=true&login={{json_encode($loginArr)}}&symbol={{$values->tradingsymbol}}&exchange={{$values->exchange}}&type=buy"><button class="btn btn-primary btn-sm mt-2">BUY</button></a>
+                                                                    <a href="/trade/order-create?group=true&login={{json_encode($loginArr)}}&symbol={{$values->tradingsymbol}}&exchange={{$values->exchange}}&type=sell"><button class="btn btn-danger btn-sm mt-2">SELL</button></a>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -242,8 +242,8 @@ display: block;
                                                                 </td>
                                                                 <td>
                                                                     <div>
-                                                                        <a href="/trade/order-create?login={{$items->loginId}}&symbol={{$values->tradingsymbol}}&type=buy"><button class="btn btn-primary btn-sm mt-2">BUY</button></a>
-                                                                        <a href="/trade/order-create?login={{$items->loginId}}&symbol={{$values->tradingsymbol}}&type=sell"><button class="btn btn-danger btn-sm mt-2">SELL</button></a>
+                                                                        <a href="/trade/order-create?login={{$items->loginId}}&symbol={{$values->tradingsymbol}}&exchange={{$values->exchange}}&type=buy"><button class="btn btn-primary btn-sm mt-2">BUY</button></a>
+                                                                        <a href="/trade/order-create?login={{$items->loginId}}&symbol={{$values->tradingsymbol}}&exchange={{$values->exchange}}&type=sell"><button class="btn btn-danger btn-sm mt-2">SELL</button></a>
                                                                     </div>
                                                                 </td>
                                                             </tr>

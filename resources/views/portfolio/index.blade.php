@@ -135,7 +135,7 @@
                                                 $totalReturn = $totalReturn+number_format((float)$item->quantity, 2, '.', '')*number_format((float)$item->ltp, 2, '.', '');
                                                 $ltp = $ltp+$item->ltp;
                                                 $averageprice = $averageprice+number_format((float)($item->averageprice), 2, '.', '');
-                                                $daysReturn = $daysReturn+number_format((float)($item->daysReturn), 2, '.', '');
+                                                $daysReturn = $daysReturn+(($item->ltp-$item->close)*$item->quantity);
                                                 $close = $close+number_format((float)($item->close), 2, '.', '');
                                                 $qty = $qty+$item->quantity;
                                             }
@@ -169,16 +169,16 @@
                                                     @if(str_contains(($ltp-$averageprice), '-'))
 
                                                         <span class="text-danger"><i class="fa fa-arrow-down" aria-hidden="true"></i> {{ number_format((float)((($ltp-$averageprice)/$averageprice)*100), 2, '.', '') }}%</span><br>
-                                                        <span class="text-danger"><i class="fa fa-inr" aria-hidden="true"></i> {{ number_format(number_format((float)(($ltp-$averageprice)*$qty), 2, '.', ''),2) }}</span>
+                                                        <span class="text-danger"><i class="fa fa-inr" aria-hidden="true"></i> {{ number_format(number_format((float)(($ltp-$averageprice)), 2, '.', ''),2) }}</span>
 
                                                     @else
 
                                                         <span style="color:#459e85"><i class="fa fa-arrow-up" aria-hidden="true"></i> {{ number_format((float)((($ltp-$averageprice)/$values->averageprice)*100), 2, '.', '') }}%</span><br>
-                                                        <span style="color:#459e85"><i class="fa fa-inr" aria-hidden="true"></i> {{ number_format(number_format((float)(($ltp-$averageprice)*$qty), 2, '.', ''), 2) }}</span>
+                                                        <span style="color:#459e85"><i class="fa fa-inr" aria-hidden="true"></i> {{ number_format(number_format((float)(($ltp-$averageprice)), 2, '.', ''), 2) }}</span>
 
                                                     @endif
                                                 </td>
-                                                <td>{{number_format(($ltp-$close)*$qty, 2)}}<br>
+                                                <td>{{number_format($daysReturn, 2)}}<br>
                                                     @if(str_contains(($ltp-$close), '-'))
 
                                                         <span class="text-danger"><i class="fa fa-arrow-down" aria-hidden="true"></i> {{ number_format((float)((($ltp-$close)/$close)*100), 2, '.', '') }}%</span><br>
@@ -238,8 +238,8 @@
                                                     </td>
                                                     <td>
                                                         <div>
-                                                            <a href="/trade/order-create?login={{$values->loginId}}&symbol={{$items->tradingsymbol}}&type=buy"><button class="btn btn-primary btn-sm mt-2">BUY</button></a>
-                                                            <a href="/trade/order-create?login={{$values->loginId}}&symbol={{$items->tradingsymbol}}&type=sell"><button class="btn btn-success btn-sm mt-2">SELL</button></a>
+                                                            <a href="/trade/order-create?login={{$values->loginId}}&symbol={{$items->tradingsymbol}}&exchange={{$items->exchange}}&type=buy"><button class="btn btn-primary btn-sm mt-2">BUY</button></a>
+                                                            <a href="/trade/order-create?login={{$values->loginId}}&symbol={{$items->tradingsymbol}}&exchange={{$items->exchange}}&type=sell"><button class="btn btn-success btn-sm mt-2">SELL</button></a>
                                                         </div>
                                                     </td>
                                                 </tr>

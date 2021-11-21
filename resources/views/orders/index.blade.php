@@ -13,7 +13,7 @@
         text-overflow: ellipsis;
         max-width: 100%;
         font-weight: bold 900;
-        
+
     }
     .selected {
     background: lightBlue
@@ -24,27 +24,7 @@
         <div class="container-fluid px-lg-4 px-xl-5">
           <!-- Page Header-->
           <div class="page-header d-flex justify-content-between align-items-center">
-              <table style="width:40%;">
-                  <tr>
-                      <td>
-                          <select class="form-control" style="">
-                          <?php
-                          $ta = App\Models\TradingAccount::all();
-                          if($ta){
-                              foreach($ta as $allta){
-                                  echo '<option value="'.$allta->id.'">'.$allta->login_id.'</option>';
-                              }
-                          }
-                          ?>
-                          </select>
-                      </td>
-                      <td>
-                        <a href="/orders/list"><button class="btn btn-success">Refresh</button></a>
-                      </td>
-                  </tr>
-              </table>
-            <!--<h1 class="page-heading">Trading Accounts</h1>-->
-            <!--<div><a class="btn btn-primary text-uppercase" href="/trading/create"> <i class="fa fa-plus me-2"> </i>Create</a></div>-->
+            <h3 class="page-heading">Orders</h3>
           </div>
           <section class="mb-5">
             <div class="card">
@@ -77,7 +57,7 @@
                           <td>
                             <button type="submit" class="btn btn-danger" value="Cancel" name="Cancel">Cancel</button>
                           </td>
-                          
+
                       </tr>
                     </table>
                     <table class="table table-hover align-middle table-bordered" id="datatable1">
@@ -187,19 +167,19 @@
                 </form>
                 @endif
                 <!--</div>-->
-                
+
               </div>
             </div>
           </section>
         </div>
-        
+
       </div>
     </div>
 <!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content" id="model_content">
-      
+
     </div>
   </div>
 </div>
@@ -207,15 +187,15 @@
      <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest"></script>
     <script src="/assets/js/tables-datatable.714838df.js"></script>
   <script type="text/javascript">
-  
+
   function getSubmitOrderUpdateForm(){
       $("#OrderUpdateForm").submit();
   }
-    
+
     function getCancelOrder(){
         $('#OrderCancelForm').submit();
     }
-  
+
     function clearAll() {
         for (var i = 0; i < trs.length; i++) {
             trs[i].className = '';
@@ -228,7 +208,7 @@
       'left-trim': true,
       'right-trim': true,
       });
-          
+
     </script>
 @endsection
 

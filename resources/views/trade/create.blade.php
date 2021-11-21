@@ -399,11 +399,19 @@ function setGroupAccount(){
 
 }
 
-function getAddDataOnSerachBox(str){
+function getAddDataOnSerachBox(str, exch){
     $('#searchBox').val("");
     $('#searchBox').val(str);
+    $('#placeExchange').val(exch);
     $("#searchResults").css({'display':'none'});
     $('#searchResults').html("");
+    $.get('/get-ltp',{symbol:str, exch:exch}, function(result){
+        if(result=="failed"){
+            alert("failed to get LTP")
+        }else{
+            $('#placePrice').val(result);
+        }
+    });
     getSearch().stop();
 }
  function getSearch(str){
@@ -468,6 +476,15 @@ $('input:radio[name="transactiontype"]').change(function(){
         if ($(this).is(':checked') && $(this).val() == 'LIMIT') {
             $('#placePrice').prop('disabled', false);
             $('#placeTriggerPrice').prop('disabled', true);
+            var symbol = $('#searchBox').val();
+            var exchange = $('#placeExchange').val();
+            $.get('/get-ltp',{symbol:symbol, exch:exchange}, function(result){
+                if(result=="failed"){
+                    alert("failed to get LTP")
+                }else{
+                    $('#placePrice').val(result);
+                }
+            });
         }else if ($(this).is(':checked') && $(this).val() == 'MARKET') {
             $('#placePrice').prop('disabled', true);
             $('#placeTriggerPrice').prop('disabled', true);

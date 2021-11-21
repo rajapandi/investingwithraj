@@ -27,7 +27,7 @@ border-bottom: 1px solid var(--color-border-1);
 
 /*************************** My Css Start **************************************/
 
-.page-top-sec {margin-bottom: 40px;} 
+.page-top-sec {margin-bottom: 40px;}
 .page-top-sec .btn {height: 35px;}
 .page-top-right{text-align:right;}
 .page-top-left table td {padding-right: 10px;}
@@ -50,11 +50,11 @@ header.header {z-index: 999; position: sticky; top: 0; width: 100%;}
 /*********** Header Fix on End *********************/
 
 /*********** sidebar Nav Css Start *********************/
-.sidebar { bottom: 0; float: none; left: 0; position: fixed; top: 75px;}
+.sidebar {bottom: 0;float: none;left: 0;position: fixed;top: 75px;overflow-y: auto;}
 .sidebar .sidebar-heading {color: #343a40;}
 .sidebar li.sidebar-list-item {margin-bottom: 12px;}
 .sidebar-menu{background: #f9f9f9;  padding: 10px 0 2px;}
-.sidebar-link:hover {background: rgba(0,0,0,0.06);}
+/* .sidebar-link:hover {background: rgba(0,0,0,0.06);} */
 .sidebar-link{padding: 0.8rem 1.5rem;}
 /*********** sidebar Nav Css End *********************/
 

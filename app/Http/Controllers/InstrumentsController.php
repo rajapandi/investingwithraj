@@ -26,30 +26,24 @@ class InstrumentsController extends Controller
 
     public function getLtp(Request $request){
         $symbol = $request->symbol;
+        $exch = $request->exch;
         $valuestr = "";
-        $seachKey = 'was:symbol';
-        if(unserialize(Redis::get($seachKey))!=null){
-            $jsonitem = json_decode(unserialize(Redis::get($seachKey)));
-        }else{
-            $json = file_get_contents("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json");
-            Redis::set($seachKey, serialize($json));
-            $jsonitem = json_decode(unserialize(Redis::get($seachKey)));
-        }
-        foreach ($jsonitem as $symbols) {
-            if(preg_match("/$symbol/i", $symbols->symbol, $matches, PREG_OFFSET_CAPTURE)==1){
-                $valuestr = $symbols->symbol;
-                $exchange = $symbols->exch_seg;
-                $symboltoken = $symbols->token;
+        $json = Instruments::where('name', $symbol)->where('exchange', $exch)->first();
+        if($json){
+            $ta = TradingAccount::where('stock_brocker', 'Angel')->first();
+            if($ta){
+                $smart_api  = new \AngelBroking\SmartApi();
+                $smart_api ->GenerateSession($ta->login_id, $ta->password);
+                $data = array("exchange"=>$exch,"tradingsymbol"=>$json->angel_symbol, "symboltoken"=>$json->angel_token);
+                $preHoldings =  json_decode($smart_api->GetLtpData($data));
+                if($preHoldings->response_data->status==false){
+                    return "failed";
+                }else{
+                    return $preHoldings->response_data->data->ltp;
+                }
             }
         }
-        $ta = TradingAccount::where('login_id', 'D229903')->first();
-        if($ta){
-            $smart_api  = new \AngelBroking\SmartApi();
-            $smart_api ->GenerateSession($ta->login_id, $ta->password);
-            $data = array("exchange"=>$exchange,"tradingsymbol"=>$valuestr, "symboltoken"=>$symboltoken);
-            $preHoldings =  json_decode($smart_api->GetLtpData($data));
-            return $preHoldings->response_data->data->ltp;
-        }
+
     }
 
     public function storeInstruments(Request $request){

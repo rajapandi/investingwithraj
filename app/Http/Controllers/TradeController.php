@@ -28,22 +28,20 @@ class TradeController extends Controller{
     public function searchTradeSymbol(Request $request){
         $str = $request->key;
         $valuestr = "";
-        $seachKey = '1was:symbol';
-        if(unserialize(Redis::get($seachKey))!=null){
-            $jsonitem = json_decode(unserialize(Redis::get($seachKey)));
-        }else{
-            // $json = file_get_contents("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json");
-            $json = Instruments::all();
-            Redis::set($seachKey, serialize($json));
-            $jsonitem = json_decode(unserialize(Redis::get($seachKey)));
-        }
-        foreach ($jsonitem as $symbol) {
-            if(preg_match("/$str/i", $symbol->name, $matches, PREG_OFFSET_CAPTURE)==1){
-                $valuestr = $symbol->name;
-                $exchange = $symbol->exchange;
-                echo '<li onclick="getAddDataOnSerachBox(\''.$valuestr.'\')"  style="cursor:pointer;">'.$valuestr.' - '.$symbol->exchange.'</li>';
+        $seachKey = 'WhizzAct:symbol';
+        $json = Instruments::where('zerodha_symbol', $str)->orWhere('name', 'like', '%' . $str . '%')->get();
+        if($json){
+            foreach ($json as $symbol) {
+                if($symbol->zerodha_symbol!=""){
+                    echo '<li onclick="getAddDataOnSerachBox(\''.$symbol->name.'\', \''.$symbol->exchange.'\')"  style="cursor:pointer;">'.$symbol->name.' - '.$symbol->exchange.'</li>';
+                }else{
+
+                }
             }
+        }else{
+            echo '<li style="cursor:pointer;">Not Found Symbol Please add</li>';
         }
+
     }
 
     public function getIdentify(Request $request){
@@ -86,19 +84,19 @@ class TradeController extends Controller{
         if($request->isSchedular=="Yes"){
             return SchedularController::storeSchedular($request);
         }else{
-            // if($group_active=="group"){
-            //     if($diff_qty=="diff_qty"){
-            //         return $this->orderPlaceByGroupAndDiffQty($request);
-            //     }else{
-            //         return $this->orderPlaceByGroup($request);
-            //     }
-            // }else{
-            //     if($diff_qty=="diff_qty"){
-            //         return $this->orderPlaceByDiffQtyOnly($request);
-            //     }else{
-            //         return $this->orderPlaceWithoutGroupAndDiffQty($request);
-            //     }
-            // }
+            if($group_active=="group"){
+                if($diff_qty=="diff_qty"){
+                    return $this->orderPlaceByGroupAndDiffQty($request);
+                }else{
+                    return $this->orderPlaceByGroup($request);
+                }
+            }else{
+                if($diff_qty=="diff_qty"){
+                    return $this->orderPlaceByDiffQtyOnly($request);
+                }else{
+                    return $this->orderPlaceWithoutGroupAndDiffQty($request);
+                }
+            }
         }
 
 
@@ -135,73 +133,55 @@ class TradeController extends Controller{
 
             $ta = TradingAccount::where('id', $account_id)->first();
             if($ta){
+                $intrument = Instruments::where('name', $trading_symbol)->where('exchange', $exchange)->first();
                 if($ta->stock_brocker=="Angel"){
-
                     $smart_api  = new \AngelBroking\SmartApi( );
-                    $jsonData = $smart_api ->GenerateSession($ta->login_id, $ta->password);
+                    $smart_api ->GenerateSession($ta->login_id, $ta->password);
+                    $order = $smart_api ->PlaceOrder(
+                        array('variety' => $variety,
+                                            'tradingsymbol'  =>  $intrument->angel_symbol,
+                                            'symboltoken' => $intrument->angel_token,
+                                            'exchange' => $exchange,
+                                            'transactiontype' => $transaction_type,
+                                            'ordertype' => $order_type,
+                                            'quantity' => $quantity,
+                                            'producttype' => $product_type,
+                                            'price' => $price,
+                                            'squareoff' => 0,
+                                            'stoploss' => $stoploss,
+                                            'duration' => $validity));
 
-                    $jsonitem = json_decode(file_get_contents("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"), true);
+                    $preData = json_decode($order, true);
 
-                    foreach ($jsonitem as $friend) {
-                        // return $trading_symbol;
-                        if ($friend['symbol'] == $trading_symbol){
-                            $trade = Trade::where('orderid', $order_id)->first();
-                            if($trade){
-                                return back()->with('msg', 'Order Placement Successfull.');
-                            }else{
-
-                                $symboltoken = $friend['token'];
-                                $symbol = $friend['symbol'];
-
-                                $order = $smart_api ->PlaceOrder(
-                                     array('variety' => $variety,
-                                                     'tradingsymbol'  =>  $symbol,
-                                                     'symboltoken' => $symboltoken,
-                                                     'exchange' => $exchange,
-                                                     'transactiontype' => $transaction_type,
-                                                     'ordertype' => $order_type,
-                                                     'quantity' => $quantity,
-                                                     'producttype' => $product_type,
-                                                     'price' => $price,
-                                                     'squareoff' => 0,
-                                                     'stoploss' => $stoploss,
-                                                     'duration' => $validity));
-
-                                $preData = json_decode($order, true);
-
-                                if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
-                                    return back()->with('msg', 'Order Placement Failed.');
-                                }
-                                if(!$preData['response_data']['data']['orderid']){
-                                    return back()->with('msg', 'Order Placement Failed.');
-                                }
-
-                                $order_id=$preData['response_data']['data']['orderid'];
-                                $td = new Trade;
-                                $td->account_id = $account_id;
-                                $td->orderid = $preData['response_data']['data']['orderid'];
-                                $td->transaction_type = $transaction_type;
-                                $td->variety = $variety;
-                                $td->exchange = $exchange;
-                                $td->trading_symbol = $trading_symbol;
-                                $td->product_type = $product_type;
-                                $td->order_type = $order_type;
-                                $td->quantity = $quantity;
-                                $td->price = $price;
-                                $td->trigger_price = $trigger_price;
-                                $td->disclosed_qty = $disclosed_qty;
-                                $td->target = $target;
-                                $td->stoploss = $stoploss;
-                                $td->trailing_stoploss = $trailing_stoploss;
-                                $td->validity = $validity;
-                                $td->amo = $account_id;
-                                $td->trade_status = "";
-                                $td->is_active = $is_active;
-                                $td->save();
-                            }
-                        }
+                    if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
+                        return back()->with('msg', 'Order Placement Failed.');
+                    }
+                    if(!$preData['response_data']['data']['orderid']){
+                        return back()->with('msg', 'Order Placement Failed.');
                     }
 
+                    $order_id=$preData['response_data']['data']['orderid'];
+                    $td = new Trade;
+                    $td->account_id = $account_id;
+                    $td->orderid = $preData['response_data']['data']['orderid'];
+                    $td->transaction_type = $transaction_type;
+                    $td->variety = $variety;
+                    $td->exchange = $exchange;
+                    $td->trading_symbol = $trading_symbol;
+                    $td->product_type = $product_type;
+                    $td->order_type = $order_type;
+                    $td->quantity = $quantity;
+                    $td->price = $price;
+                    $td->trigger_price = $trigger_price;
+                    $td->disclosed_qty = $disclosed_qty;
+                    $td->target = $target;
+                    $td->stoploss = $stoploss;
+                    $td->trailing_stoploss = $trailing_stoploss;
+                    $td->validity = $validity;
+                    $td->amo = $account_id;
+                    $td->trade_status = "";
+                    $td->is_active = $is_active;
+                    $td->save();
                 }
 
                 if($ta->stock_brocker=="Zerodha"){
@@ -218,7 +198,7 @@ class TradeController extends Controller{
                                 $product="CNC";
                             }
                             $order = $kite->placeOrder($variety, [
-                                "tradingsymbol" => $trading_symbol,
+                                "tradingsymbol" => $intrument->zerodha_symbol,
                                 "exchange" => $exchange,
                                 "quantity" => $quantity,
                                 "transaction_type" => $transaction_type,
@@ -298,72 +278,55 @@ class TradeController extends Controller{
                 foreach($gd as $allgd){
                     $ta = TradingAccount::where('login_id', $allgd->account_id)->first();
                     if($ta){
+                        $intrument = Instruments::where('name', $trading_symbol)->where('exchange', $exchange)->first();
                         if($ta->stock_brocker=="Angel"){
-
                             $smart_api  = new \AngelBroking\SmartApi( );
-                            $jsonData = $smart_api ->GenerateSession($ta->login_id, $ta->password);
-                            $jsonitem = json_decode(file_get_contents("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"), true);
-                            foreach ($jsonitem as $friend) {
-                                // return $trading_symbol;
-                                if ($friend['symbol'] == $trading_symbol){
-                                    $trade = Trade::where('orderid', $order_id)->first();
-                                    if($trade){
-                                        return back()->with('msg', 'Order Placement Successfull.');
-                                    }else{
+                            $smart_api ->GenerateSession($ta->login_id, $ta->password);
+                            $order = $smart_api ->PlaceOrder(
+                                array('variety' => $variety,
+                                                    'tradingsymbol'  =>  $intrument->angel_symbol,
+                                                    'symboltoken' => $intrument->angel_token,
+                                                    'exchange' => $exchange,
+                                                    'transactiontype' => $transaction_type,
+                                                    'ordertype' => $order_type,
+                                                    'quantity' => $quantity,
+                                                    'producttype' => $product_type,
+                                                    'price' => $price,
+                                                    'squareoff' => 0,
+                                                    'stoploss' => $stoploss,
+                                                    'duration' => $validity));
 
-                                        $symboltoken = $friend['token'];
-                                        $symbol = $friend['symbol'];
+                            $preData = json_decode($order, true);
 
-                                        $order = $smart_api ->PlaceOrder(
-                                             array('variety' => $variety,
-                                                             'tradingsymbol'  =>  $symbol,
-                                                             'symboltoken' => $symboltoken,
-                                                             'exchange' => $exchange,
-                                                             'transactiontype' => $transaction_type,
-                                                             'ordertype' => $order_type,
-                                                             'quantity' => $quantity,
-                                                             'producttype' => $product_type,
-                                                             'price' => $price,
-                                                             'squareoff' => 0,
-                                                             'stoploss' => $stoploss,
-                                                             'duration' => $validity));
-
-                                          $preData = json_decode($order, true);
-                                        // print_r($preData)."<br><br>";
-
-                                        if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
-                                            return back()->with('msg', 'Order Placement Failed.');
-                                        }
-                                        if(!$preData['response_data']['data']['orderid']){
-                                            return back()->with('msg', 'Order Placement Failed.');
-                                        }
-
-                                        $order_id=$preData['response_data']['data']['orderid'];
-                                        $td = new Trade;
-                                        $td->account_id = $account_id;
-                                        $td->orderid = $preData['response_data']['data']['orderid'];
-                                        $td->transaction_type = $transaction_type;
-                                        $td->variety = $variety;
-                                        $td->exchange = $exchange;
-                                        $td->trading_symbol = $trading_symbol;
-                                        $td->product_type = $product_type;
-                                        $td->order_type = $order_type;
-                                        $td->quantity = $quantity;
-                                        $td->price = $price;
-                                        $td->trigger_price = $trigger_price;
-                                        $td->disclosed_qty = $disclosed_qty;
-                                        $td->target = $target;
-                                        $td->stoploss = $stoploss;
-                                        $td->trailing_stoploss = $trailing_stoploss;
-                                        $td->validity = $validity;
-                                        $td->amo = $account_id;
-                                        $td->trade_status = "";
-                                        $td->is_active = $is_active;
-                                        $td->save();
-                                    }
-                                }
+                            if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
+                                return back()->with('msg', 'Order Placement Failed.');
+                            }
+                            if(!$preData['response_data']['data']['orderid']){
+                                return back()->with('msg', 'Order Placement Failed.');
                             }
 
+                            $order_id=$preData['response_data']['data']['orderid'];
+                            $td = new Trade;
+                            $td->account_id = $account_id;
+                            $td->orderid = $preData['response_data']['data']['orderid'];
+                            $td->transaction_type = $transaction_type;
+                            $td->variety = $variety;
+                            $td->exchange = $exchange;
+                            $td->trading_symbol = $trading_symbol;
+                            $td->product_type = $product_type;
+                            $td->order_type = $order_type;
+                            $td->quantity = $quantity;
+                            $td->price = $price;
+                            $td->trigger_price = $trigger_price;
+                            $td->disclosed_qty = $disclosed_qty;
+                            $td->target = $target;
+                            $td->stoploss = $stoploss;
+                            $td->trailing_stoploss = $trailing_stoploss;
+                            $td->validity = $validity;
+                            $td->amo = $account_id;
+                            $td->trade_status = "";
+                            $td->is_active = $is_active;
+                            $td->save();
                         }
 
                         if($ta->stock_brocker=="Zerodha"){
@@ -371,6 +334,7 @@ class TradeController extends Controller{
                                 try{
                                     $kite = new KiteConnect(env('KITE_KEY'));
                                     $kite->setAccessToken($ta->access_token);
+                                    $product="";
                                     if($product_type=="DELIVERY"){
                                         $product="NRML";
                                     }else if($product_type=="INTRADAY"){
@@ -379,16 +343,14 @@ class TradeController extends Controller{
                                         $product="CNC";
                                     }
                                     $order = $kite->placeOrder($variety, [
-                                        "tradingsymbol" => $trading_symbol,
+                                        "tradingsymbol" => $intrument->zerodha_symbol,
                                         "exchange" => $exchange,
                                         "quantity" => $quantity,
                                         "transaction_type" => $transaction_type,
                                         "order_type" => $order_type,
                                         "product" => $product,
                                         "price" => $price,
-                                        "validity" => $validity,
-                                        'squareoff' => 0,
-                                        'stoploss' => $stoploss,
+                                        "validity" => $validity
                                     ]);
                                     if($order->order_id){
                                         $order_id=$order->order_id;
@@ -399,7 +361,7 @@ class TradeController extends Controller{
                                         $td->variety = $variety;
                                         $td->exchange = $exchange;
                                         $td->trading_symbol = $trading_symbol;
-                                        $td->product_type = $product;
+                                        $td->product_type = $product_type;
                                         $td->order_type = $order_type;
                                         $td->quantity = $quantity;
                                         $td->price = $price;
@@ -462,71 +424,55 @@ class TradeController extends Controller{
                 foreach($gd as $allgd){
                     $ta = TradingAccount::where('login_id', $allgd->account_id)->first();
                     if($ta){
+                        $intrument = Instruments::where('name', $trading_symbol)->where('exchange', $exchange)->first();
                         if($ta->stock_brocker=="Angel"){
-
                             $smart_api  = new \AngelBroking\SmartApi( );
-                            $jsonData = $smart_api ->GenerateSession($ta->login_id, $ta->password);
-                            $jsonitem = json_decode(file_get_contents("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"), true);
-                            foreach ($jsonitem as $friend) {
-                                // return $trading_symbol;
-                                if ($friend['symbol'] == $trading_symbol){
-                                    $trade = Trade::where('orderid', $order_id)->first();
-                                    if($trade){
-                                        return back()->with('msg', 'Order Placement Successfull.');
-                                    }else{
+                            $smart_api ->GenerateSession($ta->login_id, $ta->password);
+                            $order = $smart_api ->PlaceOrder(
+                                array('variety' => $variety,
+                                                    'tradingsymbol'  =>  $intrument->angel_symbol,
+                                                    'symboltoken' => $intrument->angel_token,
+                                                    'exchange' => $exchange,
+                                                    'transactiontype' => $transaction_type,
+                                                    'ordertype' => $order_type,
+                                                    'quantity' => $quantity,
+                                                    'producttype' => $product_type,
+                                                    'price' => $price,
+                                                    'squareoff' => 0,
+                                                    'stoploss' => $stoploss,
+                                                    'duration' => $validity));
 
-                                        $symboltoken = $friend['token'];
-                                        $symbol = $friend['symbol'];
+                            $preData = json_decode($order, true);
 
-                                        $order = $smart_api ->PlaceOrder(
-                                             array('variety' => $variety,
-                                                             'tradingsymbol'  =>  $symbol,
-                                                             'symboltoken' => $symboltoken,
-                                                             'exchange' => $exchange,
-                                                             'transactiontype' => $transaction_type,
-                                                             'ordertype' => $order_type,
-                                                             'quantity' => $request->diffQty.$account_id,
-                                                             'producttype' => $product_type,
-                                                             'price' => $price,
-                                                             'squareoff' => 0,
-                                                             'stoploss' => $stoploss,
-                                                             'duration' => $validity));
-
-                                        $preData = json_decode($order, true);
-
-                                        if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
-                                            return back()->with('msg', 'Order Placement Failed.');
-                                        }
-                                        if(!$preData['response_data']['data']['orderid']){
-                                            return back()->with('msg', 'Order Placement Failed.');
-                                        }
-
-                                        $order_id=$preData['response_data']['data']['orderid'];
-                                        $td = new Trade;
-                                        $td->account_id = $account_id;
-                                        $td->orderid = $preData['response_data']['data']['orderid'];
-                                        $td->transaction_type = $transaction_type;
-                                        $td->variety = $variety;
-                                        $td->exchange = $exchange;
-                                        $td->trading_symbol = $trading_symbol;
-                                        $td->product_type = $product_type;
-                                        $td->order_type = $order_type;
-                                        $td->quantity = $request->diffQty.$account_id;
-                                        $td->price = $price;
-                                        $td->trigger_price = $trigger_price;
-                                        $td->disclosed_qty = $disclosed_qty;
-                                        $td->target = $target;
-                                        $td->stoploss = $stoploss;
-                                        $td->trailing_stoploss = $trailing_stoploss;
-                                        $td->validity = $validity;
-                                        $td->amo = $account_id;
-                                        $td->trade_status = "";
-                                        $td->is_active = $is_active;
-                                        $td->save();
-                                    }
-                                }
+                            if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
+                                return back()->with('msg', 'Order Placement Failed.');
+                            }
+                            if(!$preData['response_data']['data']['orderid']){
+                                return back()->with('msg', 'Order Placement Failed.');
                             }
 
+                            $order_id=$preData['response_data']['data']['orderid'];
+                            $td = new Trade;
+                            $td->account_id = $account_id;
+                            $td->orderid = $preData['response_data']['data']['orderid'];
+                            $td->transaction_type = $transaction_type;
+                            $td->variety = $variety;
+                            $td->exchange = $exchange;
+                            $td->trading_symbol = $trading_symbol;
+                            $td->product_type = $product_type;
+                            $td->order_type = $order_type;
+                            $td->quantity = $quantity;
+                            $td->price = $price;
+                            $td->trigger_price = $trigger_price;
+                            $td->disclosed_qty = $disclosed_qty;
+                            $td->target = $target;
+                            $td->stoploss = $stoploss;
+                            $td->trailing_stoploss = $trailing_stoploss;
+                            $td->validity = $validity;
+                            $td->amo = $account_id;
+                            $td->trade_status = "";
+                            $td->is_active = $is_active;
+                            $td->save();
                         }
 
                         if($ta->stock_brocker=="Zerodha"){
@@ -534,6 +480,7 @@ class TradeController extends Controller{
                                 try{
                                     $kite = new KiteConnect(env('KITE_KEY'));
                                     $kite->setAccessToken($ta->access_token);
+                                    $product="";
                                     if($product_type=="DELIVERY"){
                                         $product="NRML";
                                     }else if($product_type=="INTRADAY"){
@@ -542,16 +489,14 @@ class TradeController extends Controller{
                                         $product="CNC";
                                     }
                                     $order = $kite->placeOrder($variety, [
-                                        "tradingsymbol" => $trading_symbol,
+                                        "tradingsymbol" => $intrument->zerodha_symbol,
                                         "exchange" => $exchange,
                                         "quantity" => $quantity,
                                         "transaction_type" => $transaction_type,
                                         "order_type" => $order_type,
                                         "product" => $product,
                                         "price" => $price,
-                                        "validity" => $validity,
-                                        'squareoff' => 0,
-                                        'stoploss' => $stoploss,
+                                        "validity" => $validity
                                     ]);
                                     if($order->order_id){
                                         $order_id=$order->order_id;
@@ -562,7 +507,7 @@ class TradeController extends Controller{
                                         $td->variety = $variety;
                                         $td->exchange = $exchange;
                                         $td->trading_symbol = $trading_symbol;
-                                        $td->product_type = $product;
+                                        $td->product_type = $product_type;
                                         $td->order_type = $order_type;
                                         $td->quantity = $quantity;
                                         $td->price = $price;
@@ -578,9 +523,9 @@ class TradeController extends Controller{
                                         $td->save();
                                     }
                                 } catch (Handler $e) {
-                                    \Log::debug($e->getMessage());
+
                                 } catch(\KiteConnect\Exception\TokenException $e){
-                                    \Log::debug($e->getMessage());
+
                                 }
                             }
                         }
@@ -622,71 +567,55 @@ class TradeController extends Controller{
 
             $ta = TradingAccount::where('login_id', $account_id)->first();
             if($ta){
+                $intrument = Instruments::where('name', $trading_symbol)->where('exchange', $exchange)->first();
                 if($ta->stock_brocker=="Angel"){
-
                     $smart_api  = new \AngelBroking\SmartApi( );
-                    $jsonData = $smart_api ->GenerateSession($ta->login_id, $ta->password);
-                    $jsonitem = json_decode(file_get_contents("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"), true);
-                    foreach ($jsonitem as $friend) {
-                        // return $trading_symbol;
-                        if ($friend['symbol'] == $trading_symbol){
-                            $trade = Trade::where('orderid', $order_id)->first();
-                            if($trade){
-                                return back()->with('msg', 'Order Placement Successfull.');
-                            }else{
+                    $smart_api ->GenerateSession($ta->login_id, $ta->password);
+                    $order = $smart_api ->PlaceOrder(
+                        array('variety' => $variety,
+                                            'tradingsymbol'  =>  $intrument->angel_symbol,
+                                            'symboltoken' => $intrument->angel_token,
+                                            'exchange' => $exchange,
+                                            'transactiontype' => $transaction_type,
+                                            'ordertype' => $order_type,
+                                            'quantity' => $quantity,
+                                            'producttype' => $product_type,
+                                            'price' => $price,
+                                            'squareoff' => 0,
+                                            'stoploss' => $stoploss,
+                                            'duration' => $validity));
 
-                                $symboltoken = $friend['token'];
-                                $symbol = $friend['symbol'];
+                    $preData = json_decode($order, true);
 
-                                $order = $smart_api ->PlaceOrder(
-                                     array('variety' => $variety,
-                                                     'tradingsymbol'  =>  $symbol,
-                                                     'symboltoken' => $symboltoken,
-                                                     'exchange' => $exchange,
-                                                     'transactiontype' => $transaction_type,
-                                                     'ordertype' => $order_type,
-                                                     'quantity' => $request->diffQty.$account_id,
-                                                     'producttype' => $product_type,
-                                                     'price' => $price,
-                                                     'squareoff' => 0,
-                                                     'stoploss' => $stoploss,
-                                                     'duration' => $validity));
-
-                                $preData = json_decode($order, true);
-
-                                if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
-                                    return back()->with('msg', 'Order Placement Failed.');
-                                }
-                                if(!$preData['response_data']['data']['orderid']){
-                                    return back()->with('msg', 'Order Placement Failed.');
-                                }
-
-                                $order_id=$preData['response_data']['data']['orderid'];
-                                $td = new Trade;
-                                $td->account_id = $account_id;
-                                $td->orderid = $preData['response_data']['data']['orderid'];
-                                $td->transaction_type = $transaction_type;
-                                $td->variety = $variety;
-                                $td->exchange = $exchange;
-                                $td->trading_symbol = $trading_symbol;
-                                $td->product_type = $product_type;
-                                $td->order_type = $order_type;
-                                $td->quantity = $request->diffQty.$account_id;
-                                $td->price = $price;
-                                $td->trigger_price = $trigger_price;
-                                $td->disclosed_qty = $disclosed_qty;
-                                $td->target = $target;
-                                $td->stoploss = $stoploss;
-                                $td->trailing_stoploss = $trailing_stoploss;
-                                $td->validity = $validity;
-                                $td->amo = $account_id;
-                                $td->trade_status = "";
-                                $td->is_active = $is_active;
-                                $td->save();
-                            }
-                        }
+                    if($preData['response_data']['data']['orderid']==null || $preData['response_data']['data']['orderid']==""){
+                        return back()->with('msg', 'Order Placement Failed.');
+                    }
+                    if(!$preData['response_data']['data']['orderid']){
+                        return back()->with('msg', 'Order Placement Failed.');
                     }
 
+                    $order_id=$preData['response_data']['data']['orderid'];
+                    $td = new Trade;
+                    $td->account_id = $account_id;
+                    $td->orderid = $preData['response_data']['data']['orderid'];
+                    $td->transaction_type = $transaction_type;
+                    $td->variety = $variety;
+                    $td->exchange = $exchange;
+                    $td->trading_symbol = $trading_symbol;
+                    $td->product_type = $product_type;
+                    $td->order_type = $order_type;
+                    $td->quantity = $quantity;
+                    $td->price = $price;
+                    $td->trigger_price = $trigger_price;
+                    $td->disclosed_qty = $disclosed_qty;
+                    $td->target = $target;
+                    $td->stoploss = $stoploss;
+                    $td->trailing_stoploss = $trailing_stoploss;
+                    $td->validity = $validity;
+                    $td->amo = $account_id;
+                    $td->trade_status = "";
+                    $td->is_active = $is_active;
+                    $td->save();
                 }
 
                 if($ta->stock_brocker=="Zerodha"){
@@ -694,6 +623,7 @@ class TradeController extends Controller{
                         try{
                             $kite = new KiteConnect(env('KITE_KEY'));
                             $kite->setAccessToken($ta->access_token);
+                            $product="";
                             if($product_type=="DELIVERY"){
                                 $product="NRML";
                             }else if($product_type=="INTRADAY"){
@@ -702,16 +632,14 @@ class TradeController extends Controller{
                                 $product="CNC";
                             }
                             $order = $kite->placeOrder($variety, [
-                                "tradingsymbol" => $trading_symbol,
+                                "tradingsymbol" => $intrument->zerodha_symbol,
                                 "exchange" => $exchange,
                                 "quantity" => $quantity,
                                 "transaction_type" => $transaction_type,
                                 "order_type" => $order_type,
                                 "product" => $product,
                                 "price" => $price,
-                                "validity" => $validity,
-                                'squareoff' => 0,
-                                'stoploss' => $stoploss,
+                                "validity" => $validity
                             ]);
                             if($order->order_id){
                                 $order_id=$order->order_id;
@@ -722,7 +650,7 @@ class TradeController extends Controller{
                                 $td->variety = $variety;
                                 $td->exchange = $exchange;
                                 $td->trading_symbol = $trading_symbol;
-                                $td->product_type = $product;
+                                $td->product_type = $product_type;
                                 $td->order_type = $order_type;
                                 $td->quantity = $quantity;
                                 $td->price = $price;
@@ -738,9 +666,9 @@ class TradeController extends Controller{
                                 $td->save();
                             }
                         } catch (Handler $e) {
-                            \Log::debug($e->getMessage());
+
                         } catch(\KiteConnect\Exception\TokenException $e){
-                            \Log::debug($e->getMessage());
+
                         }
                     }
                 }
@@ -771,20 +699,14 @@ class TradeController extends Controller{
             if($trade){
                 $ta = TradingAccount::where('id', $trade->account_id)->first();
                 if($ta){
-                    $jsonitem = json_decode(file_get_contents("https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"), true);
-                    foreach ($jsonitem as $friend) {
-                        if ($friend['symbol'] == $trade->trading_symbol){
-                            $token = $friend['token'];
-                            $symbol = $friend['symbol'];
-                        }
-                    }
                     if($ta->stock_brocker=="Angel"){
                         if($ta->trading_platform=="SMART_API"){
+                            $intrument = Instruments::where('angel_symbol', $trade->trading_symbol)->where('exchange', $trade->exchange)->first();
                             $smart_api  = new \AngelBroking\SmartApi( );
-                            $jsonData = $smart_api ->GenerateSession($ta->login_id, $ta->password);
+                            $smart_api ->GenerateSession($ta->login_id, $ta->password);
                             $order = $smart_api ->ModifyOrder(array('variety' => $trade->variety,
-                                                 'tradingsymbol'  =>  $symbol,
-                                                 'symboltoken' => $token,
+                                                 'tradingsymbol'  =>  $intrument->angel_symbol,
+                                                 'symboltoken' => $intrument->angel_token,
                                                  'exchange' => $trade->exchange,
                                                  'transactiontype' => $trade->transaction_type,
                                                  'ordertype' => $order_type,
@@ -812,6 +734,7 @@ class TradeController extends Controller{
                         }
                     }else if($ta->stock_brocker=="Zerodha"){
                         if($ta->access_token!=null || $ta->access_token!=""){
+                            $intrument = Instruments::where('angel_symbol', $trade->trading_symbol)->where('exchange', $trade->exchange)->first();
                             try{
                                 $kite = new KiteConnect(env('KITE_KEY'));
                                 $kite->setAccessToken($ta->access_token);

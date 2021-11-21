@@ -9,7 +9,7 @@
   height: 34px;
 }
 
-.switch input { 
+.switch input {
   opacity: 0;
   width: 0;
   height: 0;
@@ -116,7 +116,7 @@ input:checked + .slider:before {
                                  // OPTIONAL
                                  //  "YOUR_ACCESS_TOKEN",
                                  // "YOUR_REFRESH_TOKEN"
-                             );  
+                             );
            ?>
           <section class="mb-5">
             <div class="card">
@@ -124,7 +124,7 @@ input:checked + .slider:before {
                   <div class="row">
                       <div class="col-md-12">
                           <span style="color:red;">{{Session::get('msg')}}</span>
-                        <form action="/trade/create" method="post"> 
+                        <form action="/trade/create" method="post">
                             @csrf
                             <table style="width:100%;">
                                 <tr colspan="5">
@@ -147,13 +147,13 @@ input:checked + .slider:before {
                                         ?>
                                     </td>
                                     <td>
-                                        
+
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>
         								<div class="radio radio-inline">
-        									<label data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Regular Order"> 
+        									<label data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Regular Order">
         									<input type="radio" id="varietyRegular" name="variety" checked="checked" value="NORMAL" @if($gs->variety=="NORMAL") checked @endif> NORMAL
         									</label>
         								</div>
@@ -165,24 +165,37 @@ input:checked + .slider:before {
         								</div>
         							</td>
                                     <td><div class="radio radio-inline">
-        									<label data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Cover Order"> 
+        									<label data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Cover Order">
         									<input type="radio" id="varietyCO" name="variety" value="AMO" @if($gs->variety=="AMO") checked @endif> AMO
         									</label>
 								        </div>
 								    </td>
                                     <td><div class="radio radio-inline">
-        									<label data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Cover Order"> 
+        									<label data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Cover Order">
         									<input type="radio" id="varietyCO" name="variety" value="ROBO" @if($gs->variety=="ROBO") checked @endif> ROBO
         									</label>
 								        </div>
 								    </td>
                                     <td>
                                         <select name="exchange" id="placeExchange" class="form-control">
-                                    		<option value="NSE" selected="">NSE</option>
+                                            @if($_GET['exchange']=="NSE")
+                                            <option value="NSE" selected="">NSE</option>
                                     		<option value="BSE">BSE</option>
                                     		<option value="MCX">MCX</option>
+                                            @endif
+                                            @if($_GET['exchange']=="BSE")
+                                            <option value="NSE">NSE</option>
+                                    		<option value="BSE" selected>BSE</option>
+                                    		<option value="MCX">MCX</option>
+                                            @endif
+                                            @if($_GET['exchange']=="MCX")
+                                            <option value="NSE">NSE</option>
+                                    		<option value="BSE">BSE</option>
+                                    		<option value="MCX" selected>MCX</option>
+                                            @endif
+
                                     	</select>
-                                        
+
 								    </td>
                                     <td>
                                         <input type="text" class="form-control"  id="searchBox" name="tradingsymbol" onkeyup="getSearch(this.value)" autocomplete="off" required @if(isset($_GET['symbol'])) value="{{$_GET['symbol']}}" @endif)>
@@ -207,7 +220,7 @@ input:checked + .slider:before {
                                     <td>
                                         <label> <input type="radio" name="productType" id="productTypeNormal" value="CARRYFORWARD" @if($gs->product_type=="CARRYFORWARD") checked @endif> CARRYFORWARD</label>&nbsp;&nbsp;
                                     </td>
-                                    
+
                                     <td>
                                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label> <input type="radio" name="orderType" id="orderTypeLimit" checked="checked" value="LIMIT">LIMIT</label>
                                     </td>
@@ -225,7 +238,7 @@ input:checked + .slider:before {
                             <table style="width:100%;">
                                 <tr>
                                     <td>
-                                        <label class="j-label float-left" for="placeQuantity">Qty</label> 
+                                        <label class="j-label float-left" for="placeQuantity">Qty</label>
     									<div class="j-input">
     										<input type="text" class="form-control qty" name="quantity" id="placeQuantity" value="{{$gs->quantity}}">
     									</div>
@@ -262,7 +275,7 @@ input:checked + .slider:before {
                                     </td>
                                 </tr>
                             </table><br>
-                          
+
                             <table style="width:100%;">
                                 <tr>
                                     <td>
@@ -274,10 +287,10 @@ input:checked + .slider:before {
                                                     $cd = DB::select('select * from trading_account where login_id = "'.$loginData.'"');
                                                     if($cd){
                                                         foreach($cd as $allcd){
-                                                            $smart_api ->GenerateSession($allcd->login_id, $allcd->password);    
+                                                            $smart_api ->GenerateSession($allcd->login_id, $allcd->password);
                                                             $jsonData = $smart_api->GetRMS();
                                                             $preRMS = json_decode($jsonData, true);
-                                                            
+
                                                             ?>
                                                             <option value="{{$allcd->id}}" selected><?php echo $loginData; ?> (&#8377; {{number_format((float)$preRMS['response_data']['data']['availablecash'], 2, '.', '')}}) </option>
                                                             <?php
@@ -289,10 +302,10 @@ input:checked + .slider:before {
                                                     $cd = DB::select('select * from trading_account where login_id = "'.$_GET['login'].'"');
                                                     if($cd){
                                                         foreach($cd as $allcd){
-                                                            $smart_api ->GenerateSession($allcd->login_id, $allcd->password);    
+                                                            $smart_api ->GenerateSession($allcd->login_id, $allcd->password);
                                                             $jsonData = $smart_api->GetRMS();
                                                             $preRMS = json_decode($jsonData, true);
-                                                            
+
                                                             ?>
                                                             <option value="{{$allcd->id}}" selected><?php echo $_GET['login']; ?> (&#8377; {{number_format((float)$preRMS['response_data']['data']['availablecash'], 2, '.', '')}}) </option>
                                                             <?php
@@ -302,10 +315,10 @@ input:checked + .slider:before {
                                                     $cd = DB::select('select * from trading_account where is_active = "active"');
                                                     if($cd){
                                                         foreach($cd as $allcd){
-                                                            $smart_api ->GenerateSession($allcd->login_id, $allcd->password);    
+                                                            $smart_api ->GenerateSession($allcd->login_id, $allcd->password);
                                                             $jsonData = $smart_api->GetRMS();
                                                             $preRMS = json_decode($jsonData, true);
-                                                            
+
                                                             ?>
                                                             <option value="{{$allcd->id}}" selected><?php echo $allcd->login_id; ?> (&#8377; {{number_format((float)$preRMS['response_data']['data']['availablecash'], 2, '.', '')}}) </option>
                                                             <?php
@@ -314,18 +327,32 @@ input:checked + .slider:before {
                                                 }
                                             }
                                             ?>
-                                            
+
                                         </select>
                                         <span style="color:red;">{{Session::get('accountmsg')}}</span>
                                     </td>
-                                    <td>Different Qty.&nbsp;&nbsp;&nbsp;<label class="switch"><input type="checkbox" name="diff_account" id="diff_account" onclick="setDiffQty()"> <span class="slider round"></span></label></td>
+                                    <td>Group Accounts&nbsp;&nbsp;&nbsp;<label class="switch"><input type="checkbox" name="group_account" id="group_account" onclick="setGroupAccount()"><span class="slider round"></span></label><br><br>
+                                        Different Qty.&nbsp;&nbsp;&nbsp;<label class="switch"><input type="checkbox" name="diff_account" id="diff_account" onclick="setDiffQty()"> <span class="slider round"></span></label>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" id="Schedular" name="Schedular" value="Yes">
+                                        <label for="Schedular">Schedular</label><br>
+                                        <div class="schedularDiv" id="schedularDiv" style="display: none;">
+                                        Price. <label class="switch ms-5"><input type="radio" name="schedular" id="priceschedular" value="Price"> <span class="slider round"></span></label><br>
+                                        Time. <label class="switch ms-5"><input type="radio" name="schedular" id="schedular" value="Time"> <span class="slider round"></span></label><br>
+                                        Percentage.<label class="switch ms-1"><input type="radio" name="schedular" id="schedular" value="Percentage"> <span class="slider round"></span></label>
+                                    </div>
+                                    </td>
                                 </tr>
                             </table>
                             <div  id="tableDiffAccount" style="display:none;"></div>
-                            
-                          <div class="mb-3">       
+                            <div id="isScheduleData" style="display: none;"></div>
+
+                          <div class="mb-3">
                           <input type="hidden" id="group_active" name="group_active">
                           <input type="hidden" id="diff_qty" name="diff_qty">
+                          <input type="hidden" name="schedular_type" id="schedular_type">
+                          <input type="hidden" name="isSchedular" id="isSchedular">
                             <button class="btn btn-primary" type="submit" style="float:right;" id="saveButon">
                             <?php
                             if($_GET['type']=="buy")    {
@@ -343,9 +370,18 @@ input:checked + .slider:before {
             </div>
           </section>
         </div>
-        
+
       </div>
     </div>
+
+       <!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" id="model_content">
+
+      </div>
+    </div>
+</div>
 
 @endsection
 
@@ -358,23 +394,23 @@ input:checked + .slider:before {
 
 
 function setDiffQty(){
-    var checkBox = document.getElementById("diff_account");  
-    var group_active = $('#group_active').val();  
+    var checkBox = document.getElementById("diff_account");
+    var group_active = $('#group_active').val();
     var placeQuantity = $('#placeQuantity').val();
     var account = <?php if(isset($_GET['login'])){ echo $_GET['login']; } ?>;
-    
+
     if(checkBox.checked == true){
-        
+
         $('#diff_qty').val("diff_qty");
         $('#accounts').css('display', 'none');
         $('#tableDiffAccount').css('display', 'block');
         $('#placeQuantity').prop('disabled', true);
-        
+
         $.get('/diffrent-qty/diff', {qty:placeQuantity, group:group_active, account: account}, function(res){
             $('#tableDiffAccount').html("");
             $('#tableDiffAccount').append(res);
         });
-        
+
     }else{
         $('#diff_qty').val("");
         $('#placeQuantity').prop('disabled', false);
@@ -386,15 +422,15 @@ function setDiffQty(){
 
 function setGroupAccount(){
   var checkBox = document.getElementById("group_account");
-  var diff_qty = $("#diff_qty"); 
+  var diff_qty = $("#diff_qty");
   if (checkBox.checked == true){
      $('#group_active').val('group');
-     
+
         $.get('/group/getgroupaccount',{}, function(result){
             $('#accounts').html("");
             $('#accounts').append(result);
         });
-     
+
   } else {
       $('#group_active').val('account');
     $.get('/group/getnotgroupaccount',{}, function(result){
@@ -405,26 +441,35 @@ function setGroupAccount(){
 
 }
 
-function getAddDataOnSerachBox(str){
+function getAddDataOnSerachBox(str, exch){
     $('#searchBox').val("");
     $('#searchBox').val(str);
-    $("#searchResults").css({'display':'none'});  
+    $('#placeExchange').val(exch);
+    $("#searchResults").css({'display':'none'});
     $('#searchResults').html("");
+    $.get('/get-ltp',{symbol:str, exch:exch}, function(result){
+        if(result=="failed"){
+            alert("failed to get LTP")
+        }else{
+            $('#placePrice').val(result);
+        }
+    });
     getSearch().stop();
 }
+
  function getSearch(str){
      if(str.length<2){
-        $("#searchResults").css({'display':'none'});  
+        $("#searchResults").css({'display':'none'});
         $('#searchResults').html("");
      }else{
          $.get('/trade/searchTradeSymbol', {key:str}, function(result){
-             $("#searchResults").css({'display':'block'});  
+             $("#searchResults").css({'display':'block'});
              $('#searchResults').html("");
              $('#searchResults').append(result);
          });
      }
  }
- 
+
 $('input:radio[name="transactiontype"]').change(function(){
     if ($(this).is(':checked') && $(this).val() == 'BUY') {
         $("#saveButon").html("BUY");
@@ -450,22 +495,26 @@ $('input:radio[name="transactiontype"]').change(function(){
             $('#placeStoploss').prop('disabled', true);
             $('#placeTrailingStoploss').prop('disabled', true);
         }else{
-        
+
            $('#placeTriggerPrice').prop('disabled', true);
             $('#placeTarget').prop('disabled', true);
             $('#placeStoploss').prop('disabled', true);
             $('#placeTrailingStoploss').prop('disabled', true);
         }
     });
- 
+
     $('input:radio[name="orderType"]').change(function(){
         if ($(this).is(':checked') && $(this).val() == 'LIMIT') {
             $('#placePrice').prop('disabled', false);
             $('#placeTriggerPrice').prop('disabled', true);
             var symbol = $('#searchBox').val();
             var exchange = $('#placeExchange').val();
-            $.get('/jqajax/ltp', {symbol:symbol, exchange:exchange}, function(result){
-                // $('#placePrice').val(result);
+            $.get('/get-ltp',{symbol:symbol, exch:exchange}, function(result){
+                if(result=="failed"){
+                    alert("failed to get LTP")
+                }else{
+                    $('#placePrice').val(result);
+                }
             });
         }else if ($(this).is(':checked') && $(this).val() == 'MARKET') {
             $('#placePrice').prop('disabled', true);
@@ -477,7 +526,46 @@ $('input:radio[name="transactiontype"]').change(function(){
             $('#placePrice').prop('disabled', true);
         }
     });
- 
+
+    $('input[type=checkbox][name=Schedular]').change(function() {
+    if ($(this).is(':checked')) {
+        $('#schedularDiv').css('display', 'block');
+        $('#isSchedular').val("Yes");
+    } else {
+        $('#isScheduleData').css('display', 'none');
+        $('#schedularDiv').css('display', 'none');
+        $('#isSchedular').val("No");
+        var inputs=document.querySelectorAll("input[type=radio][name=schedular]:checked"), x=inputs.length;
+        while(x--)inputs[x].checked=0;
+    }
+});
+
+$('input[type=radio][name=schedular]').change(function() {
+        $('#model_content').html("");
+        if (this.value == 'Price') {
+            $('#schedular_type').val("PRICE");
+            $('#exampleModal').modal('show');
+            $.get('/schedular/priceBasedSchedular', {}, function(result){
+                $('#model_content').html("");
+                $('#model_content').append(result);
+            });
+        }else if (this.value == 'Time') {
+            $('#schedular_type').val("TIME");
+            $('#exampleModal').modal('show');
+            $.get('/schedular/timeBasedSchedular', {}, function(result){
+                $('#model_content').html("");
+                $('#model_content').append(result);
+            });
+        }else if (this.value == 'Percentage') {
+            $('#schedular_type').val("PERCENTAGE");
+            $('#exampleModal').modal('show');
+            $.get('/schedular/percentageBasedSchedular', {}, function(result){
+                $('#model_content').html("");
+                $('#model_content').append(result);
+            });
+        }
+    });
+
       // Optional
       Prism.plugins.NormalizeWhitespace.setDefaults({
       'remove-trailing': true,
@@ -485,7 +573,7 @@ $('input:radio[name="transactiontype"]').change(function(){
       'left-trim': true,
       'right-trim': true,
       });
-          
+
     </script>
 @endsection
 

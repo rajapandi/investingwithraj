@@ -19,7 +19,7 @@ use KiteConnect\KiteConnect;
 use AngelBroking\SmartApi;
 
 class TradingAccountController extends Controller{
-    
+
     public function getOrders(Request $request){
         $GetOrderBook="";$GetOrderBook1="";$preOrder="";
         $kiteOrder="";$kiteOrderArray=array();
@@ -37,26 +37,26 @@ class TradingAccountController extends Controller{
                         );
                         // echo $alltd->login_id."<br>";
                         $jsonData = $smart_api ->GenerateSession($alltd->login_id, $alltd->password);
-                        
+
                         // $GetOrderBook1 = $smart_api ->GetOrderBook();
-                        
+
                         $preHoldings = json_decode($smart_api ->GetOrderBook(), true);
-                        
+
                         if($preHoldings['response_data']['data']!=null){
-                            
+
                             for($i=0;$i<count($preHoldings['response_data']['data']);$i++){
                                 $preHoldings['response_data']['data'][$i]['accountId']=$alltd->id;
                                 $preHoldings['response_data']['data'][$i]['loginId']=$alltd->login_id;
                                 $preHoldings['response_data']['data'][$i]['platform']=$alltd->trading_platform;
                                 $preHoldings['response_data']['data'][$i]['broker']=$alltd->stock_brocker;
                             }
-                            
+
                         }
-                        
+
                         // return $preHoldings;
                         if(isset($preHoldings['response_data']['data'])){
                             if($preHoldings['response_data']['data']!=null){
-                                $GetOrderData[] = array('data'=>$preHoldings['response_data']['data'], 
+                                $GetOrderData[] = array('data'=>$preHoldings['response_data']['data'],
                                 );
                             }
                         }
@@ -67,7 +67,7 @@ class TradingAccountController extends Controller{
                     }else{
                         try{
                             $kite = new KiteConnect(env('KITE_KEY'));
-                            
+
                             $kite->setAccessToken($alltd->access_token);
                             $kiteOrder = $kite->getOrders();
 
@@ -119,17 +119,17 @@ class TradingAccountController extends Controller{
                             \Log::debug($e->getMessage());
                         } catch(\KiteConnect\Exception\TokenException $e){
                             \Log::debug($e->getMessage());
-                        }   
+                        }
                     }
                 }
             }
             return view('orders.index', compact('GetOrderData'));
         }else{
-            
+
         }
-        
+
     }
-    
+
     public function store(Request $request){
         if($request->stock_brocker=="Angel"){
             $smart_api  = new \AngelBroking\SmartApi( );
@@ -160,8 +160,8 @@ class TradingAccountController extends Controller{
             // $zerodha_secret="m955ao2kqotyo3wf7nj53fa4zrw48fnj";
             // $kite = new KiteConnect($zerodha_apikey);
             // $zerodha_request_token = "mvSA37xUaXiIrwPlWy5KF1YxI6P1uxcu";//isset($_GET['request_token']) ? $_GET['request_token'] : "";
-            $kite = new KiteConnect(env('KITE_KEY'));
-            $kite->setAccessToken($allta->access_token);
+            // $kite = new KiteConnect(env('KITE_KEY'));
+            // $kite->setAccessToken($allta->access_token);
 
             $cd = new TradingAccount;
             $cd->stock_brocker  = $request->stock_brocker;
@@ -179,9 +179,9 @@ class TradingAccountController extends Controller{
             $cd->save();
             return Redirect::back()->with('msg', 'Trading Account added successfully');
         }
-        
+
     }
-    
+
     public function update(Request $request){
         if($request->stock_brocker=="Angel"){
             $smart_api  = new \AngelBroking\SmartApi(
@@ -237,7 +237,7 @@ class TradingAccountController extends Controller{
 
 
     public function getKiteUserDetail(Request $request){
-        
+
         $kite = new KiteConnect(env('KITE_KEY'));
         try {
             $user = $kite->generateSession($request->token, env('KIET_SECRET'));
@@ -248,7 +248,7 @@ class TradingAccountController extends Controller{
             echo "Authentication failed: ".$e->getMessage();
             throw $e;
         }
-    
+
         return $user;
     }
 
@@ -263,5 +263,5 @@ class TradingAccountController extends Controller{
         }
     }
 
-    
+
 }
