@@ -157,6 +157,7 @@ display: block;
                                                             $close = $close+number_format((float)($items->close), 2, '.', '');
 
                                                         }
+                                                        if($averageprice!=0){
 
                                                         ?>
                                                         <tr class="header">
@@ -248,6 +249,7 @@ display: block;
                                                                 </td>
                                                             </tr>
                                                             <?php
+                                                            }
                                                         }
                                                     }
 												}
