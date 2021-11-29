@@ -202,6 +202,7 @@
                                             $y=0;
                                             foreach($values->ITEMS as $items){
                                                 $y=$y+1;
+                                                if($items->averageprice!=0){
                                                 ?>
                                                 <tr class="hidetr">
                                                     <td>{{$items->exchange}}</td>
@@ -244,6 +245,7 @@
                                                     </td>
                                                 </tr>
                                                 <?php
+                                                }
                                                 # code...
                                             }
                                         }
